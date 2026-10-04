@@ -3,7 +3,7 @@
 An English, dependency-free Node.js terminal popup for Herdr on Windows, macOS and Linux. Requires Herdr 0.9.0+ and Node.js 18+. User directories and executable locations are discovered at runtime; no machine-specific paths are bundled. Codex is optional; without it, local skill files and installed tools are still listed.
 
 ```sh
-herdr plugin link .
+herdr plugin install tunaunuvar/herdr_skills_plugin
 herdr plugin action invoke open --plugin tunaunuvar.herdr-skills
 ```
 
@@ -51,6 +51,6 @@ node skills.test.js --live
 node skills.js --json
 ```
 
-Live checks require the local Herdr server and Codex CLI. Normal tests do not require Graft or a running agent. They cover English labels, responsive layouts, Windows command shims, Unix executable discovery and case-sensitive Unix path matching. The live integration has been verified on Windows; macOS/Linux have not been run end to end in this workspace. Skill descriptions and session titles retain their original language.
+The normal checks use Node.js built-ins only. Live discovery requires the local Herdr server and Codex CLI. The integration has been verified on Windows; macOS/Linux have not been run end to end in this workspace. Skill descriptions and session titles retain their original language.
 
 References: [Herdr plugins](https://herdr.dev/docs/cli-reference/), [keybindings](https://herdr.dev/docs/configuration/), [Codex skills/list](https://learn.chatgpt.com/docs/app-server#skills).
