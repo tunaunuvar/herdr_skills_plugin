@@ -2,7 +2,7 @@
 
 [![Windows / macOS / Linux](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-0078D4)](#install)
 [![Languages: EN / ES](https://img.shields.io/badge/languages-EN%20%7C%20ES-8B5CF6)](#language)
-[![Release: v0.4.0](https://img.shields.io/badge/release-v0.4.0-orange)](https://github.com/tunaunuvar/herdr_skills_plugin/tree/v0.4.0)
+[![Release: v0.4.1](https://img.shields.io/badge/release-v0.4.1-orange)](https://github.com/tunaunuvar/herdr_skills_plugin/tree/v0.4.1)
 [![License: MIT](https://img.shields.io/badge/license-MIT-97CA00)](LICENSE)
 
 A dependency-free Node.js popup for seeing which AI skills and tools are available in each Herdr session, and which ones have recorded use. It runs on Windows, macOS and Linux with Herdr 0.9.0+ and Node.js 18+.
