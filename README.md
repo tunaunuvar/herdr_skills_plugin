@@ -5,9 +5,13 @@
 [![Release: v0.4.1](https://img.shields.io/badge/release-v0.4.1-orange)](https://github.com/tunaunuvar/herdr_skills_plugin/tree/v0.4.1)
 [![License: MIT](https://img.shields.io/badge/license-MIT-97CA00)](LICENSE)
 
+![Promotional illustration of the Skills and Tools tabs in a terminal dashboard](docs/assets/hero.png)
+
 A dependency-free Node.js popup for seeing which AI skills and tools are available in each Herdr session, and which ones have recorded use. It runs on Windows, macOS and Linux with Herdr 0.9.0+ and Node.js 18+.
 
-![Illustrated AI Skills popup with enabled, read and no-record labels](docs/assets/skills-overview.png)
+## Skills view
+
+![Illustrated Skills popup with enabled, read and no-record labels](docs/assets/skills-overview.png)
 
 *An annotated example of the popup. Session counts and names can change; local user and workspace details are replaced with examples.*
 
@@ -51,13 +55,21 @@ description = "open AI skills and installed tools"
 
 Use **Tab** for Skills/Tools, **Left/Right** to change agent or session, **`f`** to cycle filters, **`/`** to search, **`d`** to show paths, **`l`** to change language, **`r`** to refresh, and **`q`** or **Escape** to close. Up/Down and PageUp/PageDown scroll the list.
 
+## Tools view
+
+![Annotated Tools tab showing installed commands and observed session calls](docs/assets/tools-overview.png)
+
+Press **Tab** to open the Tools tab. It checks a fixed list of commands on Herdr's PATH, including Graft, AI CLIs, Git, Node.js/npm, Python/uv, ripgrep and Firebase. The panel also shows the current session's Git branch and working-tree summary. The screenshot's counts and project details are examples; the infographic replaces the local path and project name.
+
+**INSTALLED** means the command file exists on PATH (and is executable on Unix). Discovery does not run the command or check its version. **CALL OBSERVED** means the command appeared in this session's recorded tool activity; it does not prove the call succeeded. **NO RECORD** means no matching invocation was found for this session—the command may still be installed. These records are read locally; discovery runs no tools.
+
 ## Labels
 
 - **ENABLED / DISABLED**: Codex's local `skills/list` discovery state. This does not prove an open conversation has reloaded the skill.
 - **ON DISK**: a local skill file was found, including Codex plugin-cache files; enablement is unknown.
 - **READ**: a matching full-path skill read was observed in this agent session's local transcript. It does not prove the read succeeded or that the skill is active now.
 - **NO RECORD**: no matching read was found. This does not prove non-use; injected skills, relative paths and remote sessions may not leave matching evidence.
-- **INSTALLED**: a command file exists on Herdr's PATH. Its version and successful execution are not inferred.
+- **INSTALLED**: a command file exists on Herdr's PATH. Its version and successful execution are not inferred; see [Tools view](#tools-view).
 - **CALL OBSERVED**: a command invocation was found in the session transcript; no command is executed for discovery.
 
 ## Data and compatibility
