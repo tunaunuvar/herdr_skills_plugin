@@ -104,7 +104,7 @@ function codexSkills(cwds) {
       }
       if (m.id === 2) finish(null, m.result.data);
     });
-    send(1, "initialize", { clientInfo: { name: "herdr-skills", version: "0.4.1" }, capabilities: {} });
+    send(1, "initialize", { clientInfo: { name: "herdr-skills", version: "0.4.2" }, capabilities: {} });
   });
 }
 
