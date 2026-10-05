@@ -236,6 +236,30 @@ async function snapshot() {
 }
 
 const filters = ["All", "Usage observed", "No record", "Enabled / installed", "Disabled", "Files only"];
+const labels = {
+  en: {
+    title: "SKILLS & TOOLS", skills: "SKILLS", skill: "SKILL", tools: "TOOLS", switch: "switch", refreshing: "Refreshing…", loading: "Loading…", session: "Session",
+    installed: "INSTALLED", disabled: "DISABLED", enabled: "ENABLED", onDisk: "ON DISK", callObserved: "CALL OBSERVED", read: "READ", noRecord: "NO RECORD",
+    toolCount: "TOOLS", skillCount: "SKILL", installedCount: "INSTALLED", enabledCount: "ENABLED", usageCount: "USAGE RECORDS", disabledCount: "DISABLED",
+    filter: "Filter", search: "Search", results: "results", name: "NAME", state: "STATE", thisSession: "THIS SESSION", compactColumns: "NAME / STATE / USAGE",
+    noMatches: "No entries match this filter.", skillFallback: "See the skill file for its description", toolFallback: "Command-line tool", diskFallback: "Local file / plugin cache", skillLabel: "AI skill",
+    toolNote: "INSTALLED: found on Herdr PATH. CALL OBSERVED: invocation in this session.", skillNote: "ENABLED: enabled in AI discovery. ON DISK: enablement unknown. READ: a read call.",
+    noRecordNote: "NO RECORD does not prove non-use.  Open: F8 / Ctrl+B → Shift+S", searchPrompt: "/ Type to search · Enter done · Esc clear",
+    controls: "[Tab] Skills/Tools  [←→] Session  [f] Filter  [/] Search  [d] Paths  [l] Language: EN",
+    scroll: "[↑↓ / PgUp/PgDn] Scroll   [r] Refresh   [q/Esc] Close", smallControls: "Tab: switch · l: language · q: close",
+  },
+  es: {
+    title: "HABILIDADES Y HERRAMIENTAS", skills: "HABILIDADES", skill: "HABILIDAD", tools: "HERRAMIENTAS", switch: "cambiar", refreshing: "Actualizando…", loading: "Cargando…", session: "Sesión",
+    installed: "INSTALADO", disabled: "DESACTIVADO", enabled: "ACTIVADO", onDisk: "EN DISCO", callObserved: "LLAMADA OBSERVADA", read: "LEÍDO", noRecord: "SIN REGISTRO",
+    toolCount: "HERRAMIENTAS", skillCount: "HABILIDAD", installedCount: "INSTALADAS", enabledCount: "ACTIVADAS", usageCount: "USOS REGISTRADOS", disabledCount: "DESACTIVADAS",
+    filter: "Filtro", search: "Buscar", results: "resultados", name: "NOMBRE", state: "ESTADO", thisSession: "ESTA SESIÓN", compactColumns: "NOMBRE / ESTADO / USO",
+    noMatches: "No hay entradas para este filtro.", skillFallback: "Consulta el archivo de la habilidad", toolFallback: "Herramienta de línea de comandos", diskFallback: "Archivo local / caché del plugin", skillLabel: "Habilidad de IA",
+    toolNote: "INSTALADO: disponible en PATH de Herdr. LLAMADA OBSERVADA: uso en esta sesión.", skillNote: "ACTIVADO: detectado por la API de habilidades. EN DISCO: estado desconocido. LEÍDO: lectura observada.",
+    noRecordNote: "SIN REGISTRO no significa que no se usó.  Abrir: F8 / Ctrl+B → Shift+S", searchPrompt: "/ Escribe para buscar · Intro aceptar · Esc borrar",
+    controls: "[Tab] Habilidades/Herr.  [←→] Sesión  [f] Filtro  [/] Buscar  [d] Rutas  [l] Idioma: Español",
+    scroll: "[↑↓ / PgUp/PgDn] Desplazar   [r] Actualizar   [q/Esc] Cerrar", smallControls: "Tab: pestaña · l: idioma · q: cerrar",
+  },
+};
 function filtered(skills, filter, query) {
   return skills.filter(s => (!filter || (filter === 1 ? s.read : filter === 2 ? !s.read : filter === 3 ? s.enabled === true : filter === 4 ? s.enabled === false : s.enabled == null))
     && `${s.name} ${s.description} ${s.path}`.toLowerCase().includes(query.toLowerCase()));
@@ -263,44 +287,54 @@ function renderPanel(data, state, columns = 110, rows = 32, colored = false) {
   const color = (s, code) => colored ? `\x1b[${code}m${s}\x1b[0m` : s;
   const line = (s, code = "37") => color("│ ", "90") + color(fit(s, inner), code) + color(" │", "90");
   const border = (left, right) => color(left + "─".repeat(width - 2) + right, "90");
+  const t = labels[state.language] || labels.en;
   const group = data.groups[state.selected];
   const tools = state.tab === 1, all = (tools ? group?.tools : group?.skills) || [];
   const list = filtered(all, state.filter, state.query).sort((a, b) => tools
     ? Number(b.read) - Number(a.read) || a.name.localeCompare(b.name)
     : Number(b.read) - Number(a.read) || Number(b.enabled === true) - Number(a.enabled === true) || a.name.localeCompare(b.name));
   const counts = { read: all.filter(s => s.read).length, on: all.filter(s => s.enabled === true).length, off: all.filter(s => s.enabled === false).length };
+  const gitSummary = group?.git?.summary || "Checking session repository…";
+  const gitText = state.language === "es" ? gitSummary
+    .replace("No Git repository for this session", "Sin repositorio Git en esta sesión")
+    .replace("Git status unavailable", "Estado de Git no disponible")
+    .replace("Checking session repository…", "Comprobando repositorio de la sesión…")
+    .replace("Working tree clean", "Directorio de trabajo limpio")
+    .replace(/\bstaged\b/g, "preparados").replace(/\bmodified\b/g, "modificados")
+    .replace(/\bdeleted\b/g, "eliminados").replace(/\buntracked\b/g, "sin seguimiento")
+    .replace(/\bahead\b/g, "adelante").replace(/\bbehind\b/g, "detrás") : gitSummary;
   const body = [];
-  const nameWidth = Math.max(1, inner - 28);
+  const statusWidth = state.language === "es" ? 11 : 9, nameWidth = Math.max(1, inner - statusWidth - 19);
   for (const s of list) {
-    const status = s.type === "tool" ? "INSTALLED" : s.enabled === false ? "DISABLED" : s.enabled === true ? "ENABLED" : "ON DISK";
-    const usage = s.read ? (tools ? "CALL OBSERVED" : "READ") : "NO RECORD";
+    const status = s.type === "tool" ? t.installed : s.enabled === false ? t.disabled : s.enabled === true ? t.enabled : t.onDisk;
+    const usage = s.read ? (tools ? t.callObserved : t.read) : t.noRecord;
     if (inner >= 48) {
       body.push(color("│ ", "90") + color(fit(s.name, nameWidth), "1;97") + " "
-        + color(fit(status, 9), s.enabled === true ? "32" : "33") + " "
+        + color(fit(status, statusWidth), s.enabled === true ? "32" : "33") + " "
         + color(fit(usage, 17), s.read ? "36" : "90") + color(" │", "90"));
     } else body.push(line(`${s.name} · ${status} · ${usage}`, s.read ? "1;36" : "1;37"));
-    const desc = [">", "|", ">-", "|-"].includes(s.description?.trim()) ? "See the skill file for its description" : s.description;
-    body.push(line("  " + (desc || (s.type === "tool" ? "Command-line tool" : `${s.scope === "disk" ? "Local file / plugin cache" : "AI skill"}`)), "90"));
+    const desc = [">", "|", ">-", "|-"].includes(s.description?.trim()) ? t.skillFallback : s.description;
+    body.push(line("  " + (desc || (s.type === "tool" ? t.toolFallback : `${s.scope === "disk" ? t.diskFallback : t.skillLabel}`)), "90"));
     if (state.details) body.push(line("  " + s.path, "90"));
     body.push(line(""));
   }
-  if (!body.length) body.push(line("No entries match this filter.", "33"));
-  let head = [border("╭", "╮"), line(`HERDR  /  SKILLS & TOOLS       ${state.busy ? "Refreshing…" : data.updatedAt || ""}`, "1;36"),
-    line(`${tools ? "  SKILLS" : "▸ SKILLS"} (${group?.skills.length || 0})    ${tools ? "▸ TOOLS" : "  TOOLS"} (${group?.tools?.length || 0})    [Tab] switch`, "1;37"),
+  if (!body.length) body.push(line(t.noMatches, "33"));
+  let head = [border("╭", "╮"), line(`HERDR  /  ${t.title}       ${state.busy ? t.refreshing : data.updatedAt || ""}`, "1;36"),
+    line(`${tools ? `  ${t.skills}` : `▸ ${t.skills}`} (${group?.skills.length || 0})    ${tools ? `▸ ${t.tools}` : `  ${t.tools}`} (${group?.tools?.length || 0})    [Tab] ${t.switch}`, "1;37"),
     border("├", "┤"),
-    line(`${group?.agent.toUpperCase() || "AI"}  ${group?.pane_id || "local"}  ·  Session ${data.groups.length ? state.selected + 1 : 0}/${data.groups.length}  ·  ${group?.terminal_title_stripped || "Loading…"}`, "1;37"),
+    line(`${group?.agent.toUpperCase() || "AI"}  ${group?.pane_id || "local"}  ·  ${t.session} ${data.groups.length ? state.selected + 1 : 0}/${data.groups.length}  ·  ${group?.terminal_title_stripped || t.loading}`, "1;37"),
     line(group?.cwd || "", "90"),
-    line(group?.git?.available ? `Git  ${group.git.branch}  ·  ${group.git.summary}` : `Git  ${group?.git?.summary || "Checking session repository…"}`, group?.git?.changes ? "33" : "90"),
-    line(`${all.length} ${tools ? "TOOLS" : "SKILL"}    ${counts.on} ${tools ? "INSTALLED" : "ENABLED"}    ${counts.read} USAGE RECORDS    ${tools ? "" : counts.off + " DISABLED"}`, "36"),
-    line(`Filter: ${filters[state.filter]}    Search: ${state.query || "—"}    ${list.length} results`, "37"), border("├", "┤"),
-    line(inner >= 48 ? fit("NAME", nameWidth) + " " + fit("STATE", 9) + " " + fit("THIS SESSION", 17) : "NAME / STATE / USAGE", "90")];
+    line(group?.git?.available ? `Git  ${group.git.branch}  ·  ${gitText}` : `Git  ${gitText}`, group?.git?.changes ? "33" : "90"),
+    line(`${all.length} ${tools ? t.toolCount : t.skillCount}    ${counts.on} ${tools ? t.installedCount : t.enabledCount}    ${counts.read} ${t.usageCount}    ${tools ? "" : counts.off + " " + t.disabledCount}`, "36"),
+    line(`${t.filter}: ${(state.language === "es" ? ["Todo", "Uso observado", "Sin registro", "Activado / instalado", "Desactivado", "Solo archivos"] : filters)[state.filter]}    ${t.search}: ${state.query || "—"}    ${list.length} ${t.results}`, "37"), border("├", "┤"),
+    line(inner >= 48 ? fit(t.name, nameWidth) + " " + fit(t.state, statusWidth) + " " + fit(t.thisSession, 17) : t.compactColumns, "90")];
   let foot = [border("├", "┤"),
-    line(data.warnings.join(" · ") || (tools ? "INSTALLED: found on Herdr PATH. CALL OBSERVED: invocation in this session." : "ENABLED: enabled in AI discovery. ON DISK: enablement unknown. READ: a read call."), data.warnings.length ? "33" : "90"),
-    line("NO RECORD does not prove non-use.  Open: F8 / Ctrl+B → Shift+S", "90"),
-    line(state.searching ? "/ Type to search · Enter done · Esc clear" : "[Tab] Skills/Tools  [←→] Session  [f] Filter  [/] Search  [d] Paths", "36"),
-    line("[↑↓ / PgUp/PgDn] Scroll   [r] Refresh   [q/Esc] Close", "36"), border("╰", "╯")];
+    line(data.warnings.join(" · ") || (tools ? t.toolNote : t.skillNote), data.warnings.length ? "33" : "90"),
+    line(t.noRecordNote, "90"),
+    line(state.searching ? t.searchPrompt : t.controls, "36"),
+    line(t.scroll, "36"), border("╰", "╯")];
   if (rows < 24) { head = [head[0], head[1], head[2], head[4], head[6], head[8], head[9]]; foot = [foot[0], foot[3], foot[4], foot[5]]; }
-  if (rows < 13) { head = head.slice(0, 3); foot = [line("Tab: switch · q: close", "36"), border("╰", "╯")]; }
+  if (rows < 13) { head = head.slice(0, 3); foot = [line(t.smallControls, "36"), border("╰", "╯")]; }
   const page = Math.max(1, rows - head.length - foot.length), end = Math.max(0, body.length - page);
   const offset = Math.max(0, Math.min(state.offset, end));
   const view = body.slice(offset, offset + page);
@@ -310,11 +344,11 @@ function renderPanel(data, state, columns = 110, rows = 32, colored = false) {
 
 function start() {
   let data = { groups: [], warnings: [] }, selected = 0, offset = 0, filter = 0, query = "", searching = false, busy = false;
-  let details = false, initial = true, tab = 0;
+  let details = false, initial = true, tab = 0, language = "en";
   const tty = process.stdout.isTTY;
   function draw() {
     selected = Math.min(selected, Math.max(0, data.groups.length - 1));
-    const panel = renderPanel(data, { selected, offset, filter, query, searching, busy, details, tab }, process.stdout.columns || 110, process.stdout.rows || 36, tty);
+    const panel = renderPanel(data, { selected, offset, filter, query, searching, busy, details, tab, language }, process.stdout.columns || 110, process.stdout.rows || 36, tty);
     offset = panel.offset;
     process.stdout.write((tty ? "\x1b[H" : "") + panel.lines.join("\n") + (tty ? "\x1b[J" : "\n"));
   }
@@ -352,6 +386,7 @@ function start() {
       }
       if (["q", "escape"].includes(key.name)) return process.exit(0);
       if (key.name === "r") return refresh();
+      if (key.name === "l") language = language === "en" ? "es" : "en";
       if (str === "/") searching = true;
       if (key.name === "tab") { tab = 1 - tab; offset = 0; filter = 0; query = ""; }
       if (key.name === "d") details = !details;

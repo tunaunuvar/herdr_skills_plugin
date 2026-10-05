@@ -49,8 +49,11 @@ test("skill usage comes from tool reads, not catalogues or conversation text", a
       assert.equal(panel.lines.length, rows);
       assert.ok(panel.lines.every(s => [...s].reduce((n, c) => n + cellWidth(c), 0) <= cols - 2), `Panel exceeds ${cols} columns`);
       assert.ok(panel.lines.some(s => s.includes("Graft")));
-      assert.ok(!panel.lines.some(s => /[çğıöşüÇĞİÖŞÜ]/.test(s)), "Built-in UI labels should be English");
+      assert.ok(!panel.lines.some(s => /[Ã]/.test(s)), "Default English UI should not contain garbled text");
     }
+    const spanish = renderPanel(data, { selected: 0, tab: 1, filter: 0, query: "", offset: 0, language: "es" }, 110, 36);
+    assert.ok(spanish.lines.some(s => s.includes("HABILIDADES Y HERRAMIENTAS")));
+    assert.ok(spanish.lines.some(s => s.includes("Idioma: Español")));
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
 
